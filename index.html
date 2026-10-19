@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nazmul Hussain | Cyberpunk Portfolio HUD</title>
+  <style>
+    :root {
+      --bg: #050811;
+      --cyan: #00f3ff;
+      --purple: #bc13fe;
+      --pink: #ff007f;
+      --dark-glass: rgba(10, 15, 30, 0.75);
+      --border-cyan: rgba(0, 243, 255, 0.3);
+      --border-purple: rgba(188, 19, 254, 0.3);
+      --text: #e0f7fc;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .scanlines {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 99;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.3) 50%,
+        rgba(0, 0, 0, 0.3)
+      );
+      background-size: 100% 4px;
+      opacity: 0.6;
+    }
+
+    .cyber-grid {
+      position: fixed;
+      top: 0; left: 0; width: 200%; height: 200%;
+      pointer-events: none;
+      z-index: 0;
+      background-image: 
+        linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+      background-size: 50px 50px;
+      transform: perspective(500px) rotateX(60deg) translateY(-100px);
+      animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+      0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+      100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    header {
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      z-index: 100;
+      background: rgba(5, 8, 17, 0.85);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+      letter-spacing: 2px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 25px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+    }
+
+    .hero-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 100px;
+      padding-bottom: 60px;
+    }
+
+    .hud-card {
+      background: var(--dark-glass);
+      border: 1px solid var(--border-cyan);
+      border-radius: 12px;
+      padding: 40px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.15), inset 0 0 15px rgba(0, 243, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hud-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+    }
+
+    .hud-header-tag {
+      font-family: var(--font-mono);
+      color: var(--purple);
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+    }
+
+    .hero-name {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffffff 0%, var(--cyan) 50%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    }
+
+    .typewriter-container {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      color: var(--cyan);
+      min-height: 2.5rem;
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.3rem;
+      background: var(--cyan);
+      margin-left: 5px;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .bio-hud-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px dashed var(--border-cyan);
+    }
+
+    .hud-stat-box {
+      background: rgba(0, 243, 255, 0.03);
+      border: 1px solid rgba(0, 243, 255, 0.15);
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .hud-stat-box h4 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: rgba(224, 247, 252, 0.6);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .hud-stat-box p {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    section {
+      padding: 80px 0;
+      position: relative;
+    }
+
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .section-title::before {
+      content: '//';
+      color: var(--cyan);
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border-cyan), transparent);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 25px;
+    }
+
+    .glass-card {
+      background: var(--dark-glass);
+      border: 1px solid var(--border-cyan);
+      border-radius: 10px;
+      padding: 30px;
+      backdrop-filter: blur(12px);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: var(--purple);
+      box-shadow: 0 10px 30px rgba(188, 19, 254, 0.25), inset 0 0 15px rgba(188, 19, 254, 0.1);
+    }
+
+    .card-category {
+      font-family: var(--font-mono);
+      color: var(--cyan);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      color: #fff;
+      margin-bottom: 15px;
+    }
+
+    .card-desc {
+      font-size: 0.95rem;
+      color: rgba(224, 247, 252, 0.8);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .skill-item {
+      margin-bottom: 18px;
+    }
+
+    .skill-info {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .skill-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 243, 255, 0.1);
+    }
+
+    .skill-progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      width: 0%;
+      transition: width 1.5s ease-out;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      color: var(--cyan);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease-out;
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    footer {
+      border-top: 1px solid var(--border-cyan);
+      padding: 40px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: rgba(224, 247, 252, 0.5);
+      background: rgba(5, 8, 17, 0.95);
+    }
+
+    footer span {
+      color: var(--cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scanlines"></div>
+  <div class="cyber-grid"></div>
+  <canvas id="bg-canvas"></canvas>
+
+  <header>
+    <nav>
+      <div class="logo">NH // HUD v2.6</div>
+      <ul class="nav-links">
+        <li><a href="#hero">Identity</a></li>
+        <li><a href="#tech">Tech Arsenal</a></li>
+        <li><a href="#ventures">Ventures</a></li>
+        <li><a href="#github">GitHub Lab</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="container">
+    
+    <!-- HERO SECTION -->
+    <section id="hero" class="hero-section">
+      <div class="hud-card reveal">
+        <div class="hud-header-tag">[ SYSTEM ACTIVE // HOLOGRAPHIC IDENTITY HUD ]</div>
+        <h1 class="hero-name">Nazmul Hussain</h1>
+        
+        <div class="typewriter-container">
+          <span id="typewriter"></span><span class="cursor"></span>
+        </div>
+
+        <p style="color: rgba(224, 247, 252, 0.85); line-height: 1.7; font-size: 1.05rem;">
+          Architecting high-scale digital platforms, AI agent workflows, immersive 3D experiences, and cross-platform enterprise software across global tech hubs.
+        </p>
+
+        <div class="bio-hud-grid">
+          <div class="hud-stat-box">
+            <h4>Operational Bases</h4>
+            <p>Kolkata, India & Dubai, UAE</p>
+          </div>
+          <div class="hud-stat-box">
+            <h4>Industry Experience</h4>
+            <p>10+ Years Experience</p>
+          </div>
+          <div class="hud-stat-box">
+            <h4>Academic Degree</h4>
+            <p>BCA Degree</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TECH ARSENAL SECTION -->
+    <section id="tech">
+      <h2 class="section-title reveal">TECH ARSENAL</h2>
+      <div class="grid-3">
+        
+        <!-- Full-Stack Web -->
+        <div class="glass-card reveal">
+          <div class="card-category">Core Engineering</div>
+          <h3 class="card-title">Full-Stack Web</h3>
+          <p class="card-desc">Architecting robust, scalable web platforms with dynamic frontends and backend microservices.</p>
+          
+          <div class="skill-item">
+            <div class="skill-info"><span>MongoDB & Express.js</span><span>92%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="92%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>React & Node.js (MERN)</span><span>95%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="95%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>JavaScript ES6+ / HTML5 / CSS3</span><span>98%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="98%"></div></div>
+          </div>
+
+          <div class="tag-container">
+            <span class="tag">MongoDB</span>
+            <span class="tag">Express.js</span>
+            <span class="tag">React</span>
+            <span class="tag">Node.js (MERN)</span>
+            <span class="tag">JavaScript ES6+</span>
+            <span class="tag">HTML5/CSS3</span>
+            <span class="tag">WordPress</span>
+            <span class="tag">Elementor Pro</span>
+          </div>
+        </div>
+
+        <!-- Mobile & AI -->
+        <div class="glass-card reveal">
+          <div class="card-category">Next-Gen Tech</div>
+          <h3 class="card-title">Mobile & AI</h3>
+          <p class="card-desc">Building cross-platform apps integrated with autonomous AI agents and secure encryption protocols.</p>
+
+          <div class="skill-item">
+            <div class="skill-info"><span>Flutter & Dart</span><span>94%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="94%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>AI Agents & LLM Workflows</span><span>90%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="90%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>End-to-End Encryption</span><span>88%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="88%"></div></div>
+          </div>
+
+          <div class="tag-container">
+            <span class="tag">Flutter</span>
+            <span class="tag">Dart</span>
+            <span class="tag">AI Agents & LLM Workflows</span>
+            <span class="tag">GitHub Copilot</span>
+            <span class="tag">End-to-End Encryption</span>
+            <span class="tag">Power BI</span>
+          </div>
+        </div>
+
+        <!-- Design, Motion & 3D -->
+        <div class="glass-card reveal">
+          <div class="card-category">Visual Synthesis</div>
+          <h3 class="card-title">Design, Motion & 3D</h3>
+          <p class="card-desc">Crafting futuristic UI/UX designs, 3D assets, dynamic motion graphics, and Unreal Engine interactive worlds.</p>
+
+          <div class="skill-item">
+            <div class="skill-info"><span>UI/UX Design & Figma</span><span>95%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="95%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>Blender 3D & Unreal Engine 5</span><span>86%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="86%"></div></div>
+          </div>
+          <div class="skill-item">
+            <div class="skill-info"><span>Photoshop / Premiere / After Effects</span><span>92%</span></div>
+            <div class="skill-bar"><div class="skill-progress" data-width="92%"></div></div>
+          </div>
+
+          <div class="tag-container">
+            <span class="tag">UI/UX Design</span>
+            <span class="tag">Figma</span>
+            <span class="tag">Adobe Photoshop</span>
+            <span class="tag">Illustrator</span>
+            <span class="tag">Premiere Pro</span>
+            <span class="tag">After Effects</span>
+            <span class="tag">Blender 3D</span>
+            <span class="tag">Unreal Engine 5</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- VENTURES SECTION -->
+    <section id="ventures">
+      <h2 class="section-title reveal">FLAGSHIP VENTURES & ENTERPRISE PROJECTS</h2>
+      <div class="grid-3">
+
+        <div class="glass-card reveal">
+          <div class="card-category">Studio & Tech Academy</div>
+          <h3 class="card-title">Omebly & KiniCode</h3>
+          <p class="card-desc">
+            Co-leading a remote-first digital studio and tech academy across Kolkata & Dubai; live AI mobile app workshops.
+          </p>
+          <div class="tag-container">
+            <span class="tag">Omebly & KiniCode</span>
+            <span class="tag">Kolkata & Dubai</span>
+            <span class="tag">AI Mobile App Workshops</span>
+          </div>
+        </div>
+
+        <div class="glass-card reveal">
+          <div class="card-category">Software Ecosystems</div>
+          <h3 class="card-title">Zenkart, Essenzi & Tripurakart</h3>
+          <p class="card-desc">
+            Digital software ecosystem and high-conversion e-commerce architectures.
+          </p>
+          <div class="tag-container">
+            <span class="tag">Zenkart</span>
+            <span class="tag">Essenzi</span>
+            <span class="tag">Tripurakart</span>
+          </div>
+        </div>
+
+        <div class="glass-card reveal">
+          <div class="card-category">Enterprise Solutions</div>
+          <h3 class="card-title">UAE Corporate Systems</h3>
+          <p class="card-desc">
+            Digital platforms built for Dubai Shipping LLC, Emirates Packaging Group LLC, and Golden Colour General Trading LLC.
+          </p>
+          <div class="tag-container">
+            <span class="tag">Dubai Shipping LLC</span>
+            <span class="tag">Emirates Packaging Group LLC</span>
+            <span class="tag">Golden Colour General Trading LLC</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- GITHUB LAB SECTION -->
+    <section id="github">
+      <h2 class="section-title reveal">OPEN-SOURCE GITHUB LAB</h2>
+      <div class="grid-3">
+
+        <div class="glass-card reveal">
+          <div class="card-category">Repository // Encrypted Chat</div>
+          <h3 class="card-title">hussain5049/secure-chat</h3>
+          <p class="card-desc">
+            Encrypted messaging with 24h auto-delete.
+          </p>
+          <div class="tag-container">
+            <span class="tag">hussain5049/secure-chat</span>
+            <span class="tag">24h Auto-Delete</span>
+          </div>
+        </div>
+
+        <div class="glass-card reveal">
+          <div class="card-category">Repository // Downloader</div>
+          <h3 class="card-title">hussain5049/omebly-downloader</h3>
+          <p class="card-desc">
+            High-performance downloader utility for digital assets and media streams.
+          </p>
+          <div class="tag-container">
+            <span class="tag">hussain5049/omebly-downloader</span>
+          </div>
+        </div>
+
+        <div class="glass-card reveal">
+          <div class="card-category">Repository // Enhancer</div>
+          <h3 class="card-title">hussain5049/Wand-Enhancer</h3>
+          <p class="card-desc">
+            AI-powered image & dynamic prompt enhancement engine.
+          </p>
+          <div class="tag-container">
+            <span class="tag">hussain5049/Wand-Enhancer</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 <span>Nazmul Hussain</span>. Cyberpunk Holographic HUD Portfolio. Built with Pure HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <script>
+    /* Interactive Canvas Neural Particle Network Background */
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const mouse = { x: null, y: null, radius: 150 };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 1.2;
+        this.vy = (Math.random() - 0.5) * 1.2;
+        this.radius = Math.random() * 2 + 1;
+        this.color = Math.random() > 0.5 ? '#00f3ff' : '#bc13fe';
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    const particles = [];
+    const particleCount = Math.min(Math.floor(width * 0.08), 90);
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = particles[i].color === '#00f3ff' ? 'rgba(0, 243, 255, 0.15)' : 'rgba(188, 19, 254, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+
+        if (mouse.x !== null && mouse.y !== null) {
+          const mdx = particles[i].x - mouse.x;
+          const mdy = particles[i].y - mouse.y;
+          const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+
+          if (mdist < mouse.radius) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+
+    /* Dynamic Typewriter Effect */
+    const titles = [
+      "Managing Director & Technical Head",
+      "Full-Stack MERN & Flutter Architect",
+      "Digital Agency Founder (Omebly & KiniCode)",
+      "UI/UX Designer & 3D Unreal Creator"
+    ];
+
+    let titleIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    const typewriterEl = document.getElementById('typewriter');
+
+    function typeWriter() {
+      const currentTitle = titles[titleIndex];
+
+      if (isDeleting) {
+        typewriterEl.textContent = currentTitle.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        typewriterEl.textContent = currentTitle.substring(0, charIndex + 1);
+        charIndex++;
+      }
+
+      let speed = isDeleting ? 40 : 80;
+
+      if (!isDeleting && charIndex === currentTitle.length) {
+        speed = 2000;
+        isDeleting = true;
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        titleIndex = (titleIndex + 1) % titles.length;
+        speed = 500;
+      }
+
+      setTimeout(typeWriter, speed);
+    }
+
+    typeWriter();
+
+    /* Scroll Reveal & Animated Skill Bars */
+    function checkReveal() {
+      const reveals = document.querySelectorAll('.reveal');
+      const windowHeight = window.innerHeight;
+
+      reveals.forEach(el => {
+        const top = el.getBoundingClientRect().top;
+        if (top < windowHeight - 80) {
+          el.classList.add('active');
+
+          const skillBars = el.querySelectorAll('.skill-progress');
+          skillBars.forEach(bar => {
+            bar.style.width = bar.getAttribute('data-width');
+          });
+        }
+      });
+    }
+
+    window.addEventListener('scroll', checkReveal);
+    window.addEventListener('load', checkReveal);
+  </script>
+</body>
+</html>
